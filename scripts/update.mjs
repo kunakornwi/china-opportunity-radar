@@ -158,7 +158,7 @@ async function main() {
       const ok =
         typeof opp.summary === "string" && opp.summary.length >= 30 &&
         Array.isArray(opp.how_to_start) && opp.how_to_start.length >= 3 &&
-        typeof opp.confidence === "number" && opp.confidence >= 0.45;
+        typeof opp.confidence === "number" && opp.confidence >= 0.2;
 
       if (!ok) continue;
 
