@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>China Opportunity Radar</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial;max-width:980px;margin:28px auto;padding:0 16px;line-height:1.6}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .pill{border:1px solid #ddd;border-radius:999px;padding:6px 10px;font-size:12px;color:#555}
+    .row{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    @media (max-width: 920px){ .row{grid-template-columns:1fr} }
+    .card{border:1px solid #e2e2e2;border-radius:16px;padding:14px 16px;margin:12px 0;background:#fff}
+    .meta{color:#666;font-size:12px}
+    .score{font-weight:700}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width: 700px){ .grid{grid-template-columns:1fr} }
+    input,select{padding:10px 12px;border:1px solid #ddd;border-radius:12px;width:100%}
+    button{padding:10px 12px;border:1px solid #111;border-radius:12px;background:#111;color:#fff;cursor:pointer;width:100%}
+    a{color:inherit}
+    .tag{display:inline-block;border:1px solid #ddd;border-radius:999px;padding:3px 8px;font-size:12px;margin:4px 6px 0 0;color:#444}
+    .muted{color:#666}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 style="margin:0">China Opportunity Radar</h1>
+      <div class="meta" id="updated"></div>
+    </div>
+    <div class="pill">B2C • Side-hustle signals • Auto-updated</div>
+  </header>
+
+  <div class="row">
+    <main>
+      <div class="grid">
+        <div>
+          <input id="q" placeholder="ค้นหาโอกาส… เช่น TikTok, dropship, AI, logistics" />
+        </div>
+        <div>
+          <select id="cat">
+            <option value="">ทุกหมวด</option>
+            <option>Product Trend</option>
+            <option>Business Model</option>
+            <option>AI Tool</option>
+            <option>Cross-border</option>
+            <option>Risk/Regulation</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="list"></div>
+    </main>
+
+    <aside>
+      <div class="card">
+        <h3 style="margin:0 0 8px 0">ทำเงินจาก Radar</h3>
+        <p class="muted" style="margin:0 0 10px 0">
+          ตั้งเป็น “รายสัปดาห์” และขายแบบสมาชิก/เพลย์บุ๊กได้ทันที
+        </p>
+        <button onclick="alert('ใส่ลิงก์ชำระเงิน/สมัครสมาชิกที่นี่ เช่น Gumroad/Stripe/PromptPay page')">
+          สมัครสมาชิก Premium
+        </button>
+        <p class="meta" style="margin-top:10px">
+          แนะนำ: Free 3 โอกาส/สัปดาห์ • Premium 10 โอกาส/สัปดาห์ + Playbook รายเดือน
+        </p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 8px 0">หลักการคัดเลือก</h3>
+        <ul class="muted" style="margin:0; padding-left:18px">
+          <li>ยึดแหล่งข่าวน่าเชื่อถือ</li>
+          <li>AI สรุป + แปลงเป็น “Action steps”</li>
+          <li>มีคะแนนโอกาสและความเสี่ยง</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    async function load() {
+      const res = await fetch("./radar.json", { cache: "no-store" });
+      const data = await res.json();
+      document.getElementById("updated").textContent =
+        "อัปเดตล่าสุด: " + new Date(data.updatedAt).toLocaleString("th-TH");
+
+      const qEl = document.getElementById("q");
+      const catEl = document.getElementById("cat");
+      const list = document.getElementById("list");
+
+      function render() {
+        const q = (qEl.value || "").toLowerCase().trim();
+        const cat = catEl.value;
+
+        const items = data.items.filter(it => {
+          const hitQ = !q || (it.title + " " + it.summary + " " + (it.keywords||[]).join(" ")).toLowerCase().includes(q);
+          const hitC = !cat || it.category === cat;
+          return hitQ && hitC;
+        });
+
+        list.innerHTML = items.map(it => `
+          <div class="card">
+            <div class="meta">
+              ${new Date(it.date).toLocaleString("th-TH")}
+              • <b>${it.category}</b>
+              • <span class="score">Opportunity ${it.opportunity_score}/10</span>
+              • Risk ${it.risk_score}/10
+              • Source: ${it.sources.join(", ")}
+            </div>
+            <h2 style="margin:8px 0 6px 0;font-size:18px">
+              <a href="${it.sourceUrl}" target="_blank" rel="noopener">${it.title}</a>
+            </h2>
+            <p style="margin:0 0 10px 0">${it.summary}</p>
+            <div><b>How to start:</b>
+              <ol style="margin:6px 0 0 18px">
+                ${(it.how_to_start||[]).slice(0,4).map(x=>`<li>${x}</li>`).join("")}
+              </ol>
+            </div>
+            <div style="margin-top:10px">
+              ${(it.keywords||[]).slice(0,8).map(k=>`<span class="tag">${k}</span>`).join("")}
+            </div>
+          </div>
+        `).join("");
+
+        if (!items.length) list.innerHTML = `<div class="card">ไม่พบผลลัพธ์</div>`;
+      }
+
+      qEl.addEventListener("input", render);
+      catEl.addEventListener("change", render);
+      render();
+    }
+    load();
+  </script>
+</body>
+</html>
